@@ -10,4 +10,5 @@ s : Increase X axis scale
 x : Decrease X axis scale
 q : Reset camera to origin
 r : Clear current visualization
+arrow keys : Strafe camera
 ```
