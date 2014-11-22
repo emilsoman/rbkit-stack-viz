@@ -3,14 +3,15 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-	ofEnableSmoothing();
   subscriber.connect("tcp://localhost:5555");
   request.connect("tcp://localhost:5556");
-  //executionTrace.setup("Execution trace", false);
-  //executionTrace.addListener(this, &ofApp::exectionTraceToggled);
-  messageParserThread = ofPtr<MessageParserThread>(new MessageParserThread(&subscriber));
 
-  messageParserThread->startThread();
+  world = ofPtr<World>(new World);
+  messageParserThread = ofPtr<MessageParserThread>(new MessageParserThread(&subscriber, world));
+  messageParserThread->startThread(true);
+  ofEnableDepthTest();
+  light.setPosition(0,700,700);
+  light.enable();
   cam.setDistance(300);
 }
 
@@ -22,21 +23,30 @@ void ofApp::update(){
 void ofApp::draw(){
 
   ofBackground(248, 248, 245);
-  //executionTrace.draw();
-  //ofEnableDepthTest();
   cam.begin();
   ofDrawAxis(300);
-  //messageParserThread->lock();
-  drawBoxes();
-  //messageParserThread->unlock();
-  //ofDrawBox(x, y, z, <#float width#>, <#float height#>, <#float depth#>)
-  cam.end();
+  MapThreadMethodNodes mapThreadMethodNodes = messageParserThread->mapThreadMethodNodes;
+  int threadCount = 0;
+  MapThreadMethodNodes::iterator it = mapThreadMethodNodes.begin();
+  while(it != mapThreadMethodNodes.end()) {
+    float z = threadCount * 60;
+    ofSetColor(0,0,0);
+    ofDrawBitmapString("Thread:" + ofToString(threadCount + 1), -20, 0, z);
+    ofPtr<MethodNodeVector> nodes = it->second;
+    for (int i = 0; i < nodes->size(); ++i) {
+      nodes->at(i)->drawAtZ(z);
+      nodes->at(i)->mouseOverCheck(cam, mouseX, mouseY);
+    }
 
+    threadCount += 1;
+    it++;
+  }
+  cam.end();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if(key == 'r') {
+  if(key == 'q') {
     cam.setPosition(0,0,300);
     ofVec3f pos(0,0,0);
     cam.setTarget(pos);
@@ -59,6 +69,15 @@ void ofApp::keyPressed(int key){
   if(key == 'z') {
     cam.dolly(10);
   }
+  if(key == 's') {
+    world->scale += 1;
+  }
+  if(key == 'x') {
+    world->scale -= 1;
+  }
+  if(key == 'r') {
+    messageParserThread->mapThreadMethodNodes.clear();
+  }
 }
 
 //--------------------------------------------------------------
@@ -68,7 +87,6 @@ void ofApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y ){
-
 }
 
 //--------------------------------------------------------------
@@ -103,61 +121,4 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 void ofApp::exit() {
   messageParserThread->stopThread();
-}
-
-//void ofApp::exectionTraceToggled(bool &value) {
-  //if (value) {
-    //request.send("start_cpu_profile");
-  //} else {
-    //request.send("stop_cpu_profile");
-  //}
-  //string response;
-  //request.receive(response);
-  //cout << "Received : " << response << "\n";
-//}
-
-void ofApp::drawBoxes() {
-  map<unsigned long long, ofPtr<MethodInfoVector> >::iterator it;
-  map<unsigned long long, ofPtr<MethodInfoVector> > threadExecutionTraceMap = messageParserThread->threadExecutionTraceMap;
-  int thread_count = 0;
-  for(it = threadExecutionTraceMap.begin(); it != threadExecutionTraceMap.end(); ++it, ++thread_count) {
-    unsigned long long thread_id = it->first;
-    ofPtr<MethodInfoVector> vptr = it->second;
-    drawBoxesForThread(thread_id, thread_count * 150, vptr);
-  }
-}
-
-void ofApp::drawBoxesForThread(unsigned long long thread_id, float ypos, ofPtr<MethodInfoVector> vptr) {
-
-  //cout << "ExecutionTrace : " << messageParserThread->m_vExecutionTrace.size() << std::endl;
-  float x = 0,y = ypos,z = 0;
-  ofSetColor(0, 0, 0);
-  ofDrawBitmapString("ThreadID:" + ofToString(thread_id), x - 100, y, z);
-  float width = 10, height = 10, depth = 10;
-  double previous_start_time = 0;
-  for (int i = 0; i < vptr->size() ; ++i) {
-    ofPtr<MethodInfo> ptr = vptr->at(i);
-    width = (ptr->end_time - ptr->start_time) ;
-    ofPushStyle();
-    y = ypos + ptr->stack_level * height;
-    if(i == 0)
-      x = 0;
-    else
-      x += (ptr->start_time - previous_start_time);// + (width/2);
-    previous_start_time = ptr->start_time;
-    //ofDrawBox(x, y, z, width, height, depth);
-    ofSetColor(187, 232, 9);
-    ofFill();
-    ofRect(x, y, z, width, height);
-    ofSetColor(48, 239, 249);
-    ofNoFill();
-    ofRect(x, y, z, width, height);
-    ofSetColor(0,0,0);
-    if(width > 30) {
-      glDepthFunc(GL_ALWAYS); // draw on top of everything
-      ofDrawBitmapString(ptr->method_name, x + 2, y, z);
-      glDepthFunc(GL_LESS);
-    }
-    ofPopStyle();
-  }
 }

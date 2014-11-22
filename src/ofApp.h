@@ -1,9 +1,10 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxGui.h"
 #include "method_info.h"
 #include "message_parser_thread.h"
+#include "method_node.h"
+#include "world.h"
 
 class ofApp : public ofBaseApp{
 
@@ -22,13 +23,11 @@ class ofApp : public ofBaseApp{
     void windowResized(int w, int h);
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
-    //void exectionTraceToggled(bool &value);
-    void drawBoxes();
-    void drawBoxesForThread(unsigned long long thread_id, float ypos, ofPtr<MethodInfoVector> vptr);
     float camDist;
-    //ofxToggle executionTrace;
     ofxZmqSubscriber subscriber;
     ofxZmqRequest request;
     ofEasyCam cam; // add mouse controls for camera movement
+    ofLight light;
     ofPtr<MessageParserThread> messageParserThread;
+    ofPtr<World> world;
 };
