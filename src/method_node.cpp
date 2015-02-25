@@ -51,13 +51,6 @@ void MethodNode::mouseOverCheck(const ofEasyCam &cam, int mouseX, int mouseY) {
   if(rect.inside(mouseX, mouseY)) {
     ofVec3f point(mouseX, mouseY - 100, 0);
     ofDrawBitmapString(method_name, cam.screenToWorld(point));
-    //ofNoFill();
-    //ofSetColor(ofColor::black);
-    //ofBeginShape();
-    //ofVertices(points);
-    //ofEndShape(false);
-    //ofSetColor(ofColor::blue);
-    //rect.draw();
   }
 }
 

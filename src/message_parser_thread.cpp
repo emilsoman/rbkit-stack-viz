@@ -25,12 +25,12 @@ void MessageParserThread::threadedFunction() {
         for(auto &obj : event_array) {
           map = obj.as<std::map<unsigned int, msgpack::object> >();
           event_type = map[0].as<unsigned int>();
-          double cpu_time = map[11].as<double>();
+          double cpu_time = map[13].as<double>();
           map = map[2].as<std::map<unsigned int, msgpack::object> >();
-          string method_name = map[10].as<string>();
-          unsigned long long thread_id = map[12].as<unsigned long long>();
+          string method_name = map[12].as<string>();
+          unsigned long long thread_id = map[14].as<unsigned long long>();
 
-          if(event_type == 8) {
+          if(event_type == 9) {
             if(mapThreadStack.empty() && !world->referenceTime) {
               world->referenceTime = cpu_time;
             }
@@ -41,7 +41,7 @@ void MessageParserThread::threadedFunction() {
             node->setup(world, cpu_time, cpu_time);
             node->color = nextColor();
             mapThreadStack[thread_id]->push_back(node);
-          } else if( event_type == 9) {
+          } else if( event_type == 10) {
             if(mapThreadStack.empty() && !world->referenceTime) {
               world->referenceTime = cpu_time;
             }
